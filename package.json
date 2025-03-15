@@ -1,0 +1,23 @@
+{
+    "name": "desktop-alarm-clock-puzzle",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/NikitinUser/desktop-alarm-clock-puzzle.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/NikitinUser/desktop-alarm-clock-puzzle/issues"
+    },
+    "homepage": "https://github.com/NikitinUser/desktop-alarm-clock-puzzle#readme",
+    "devDependencies": {
+        "electron": "^35.0.1"
+    }
+}
