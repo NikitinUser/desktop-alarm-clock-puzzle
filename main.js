@@ -104,7 +104,9 @@ function checkTimeAndStartProcess() {
 
     const alarms = readJSONFile();
     const now = new Date();
-    const currentTime = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0');
+    const currentTime = String(now.getHours()).padStart(2, '0')
+        + ":" + String(now.getMinutes()).padStart(2, '0')
+        + ":" + String(now.getSeconds()).padStart(2, '0');
 
     alarms.forEach(alarmItem => {
         if (
