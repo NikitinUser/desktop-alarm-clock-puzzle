@@ -1,3 +1,4 @@
+const { app, BrowserWindow, ipcMain } = require("electron");
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -5,6 +6,8 @@ const readline = require('readline');
 
 const FILE_PATH = path.join(__dirname, 'alarms.json');
 const SOUND_FILE = path.join(__dirname, 'sounds/alarm.mp3');
+
+let editJsonWindow;
 
 function updateJSONOnCompletion(alarmItem) {
     const data = readJSONFile();
@@ -22,29 +25,20 @@ function playSound() {
 }
 
 function createAlarmPuzzle() {
-    let res = {
-        text: "",
-        mathResult: 0,
-    };
-
     const operations = ["+", "-", "*"];
 
     const min = -100;
     const max = 100;
 
-    let a = parseInt(Math.random() * (max - min) + min);
-    let b = parseInt(Math.random() * (max - min) + min);
-    let c = parseInt(Math.random() * (max - min) + min);
-    let d = parseInt(Math.random() * (max - min) + min);
+    const randomNum = () => parseInt(Math.random() * (max - min) + min);
+    const randomOp = () => operations[parseInt(Math.random() * (3 - 0) + 0)];
 
-    let op1 = parseInt(Math.random() * (3 - 0) + 0);
-    let op2 = parseInt(Math.random() * (3 - 0) + 0);
-    let op3 = parseInt(Math.random() * (3 - 0) + 0);
+    let text = `${randomNum()} ${randomOp()} ${randomNum()} ${randomOp()} ${randomNum()} ${randomOp()} ${randomNum()}`;;
 
-    res.text = a + ' ' + operations[op1] + ' ' + b + ' ' + operations[op2] + ' ' + c + ' ' + operations[op3] + ' ' + d;
-    res.mathResult = eval(res.text);
-
-    return res;
+    return {
+        text: text,
+        mathResult: eval(text),
+    };;
 }
 
 function isProcessRunning(pid) {
@@ -73,10 +67,11 @@ function startMathProcess(alarmItem) {
             if (parseInt(answer.trim()) === alarmMathPuzzle.mathResult) {
                 console.log("Правильно!");
                 clearInterval(soundInterval);
-                rl.close();
                 updateJSONOnCompletion(alarmItem);
+                rl.close();
             } else {
                 console.log("Неправильно!");
+                console.log(alarmMathPuzzle.text);
                 askQuestion();
             }
         });
@@ -110,8 +105,8 @@ function checkTimeAndStartProcess() {
 
     alarms.forEach(alarmItem => {
         if (
-            (alarmItem.time === currentTime && alarmItem.active && !alarmItem.started)
-            || (alarmItem.active && !alarmItem.solved && !alarmItem.started)
+            alarmItem.active && !alarmItem.started
+            && ((alarmItem.time === currentTime) || (!alarmItem.solved))
         ) {
             alarmItem.solved = false;
             alarmItem.started = true;
@@ -121,4 +116,42 @@ function checkTimeAndStartProcess() {
     });
 }
 
+function createEditJsonWindow() {
+    editJsonWindow = new BrowserWindow({
+        width: 400,
+        height: 400,
+        modal: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        },
+    });
+    editJsonWindow.loadFile("edit-json.html");
+
+    editJsonWindow.on("closed", () => {
+        createEditJsonWindow();
+    });
+}
+
 setInterval(checkTimeAndStartProcess, 1000);
+
+app.whenReady().then(() => {
+    createEditJsonWindow();
+});
+
+ipcMain.handle("load-data", async () => {
+    try {
+        return fs.existsSync(FILE_PATH) ? fs.readFileSync(FILE_PATH, "utf8") : "";
+    } catch (err) {
+        console.error("Ошибка чтения файла:", err);
+        return "";
+    }
+});
+
+ipcMain.on("save-data", (_, data) => {
+    try {
+        fs.writeFileSync(FILE_PATH, data, "utf8");
+    } catch (err) {
+        console.error("Ошибка сохранения файла:", err);
+    }
+});

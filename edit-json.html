@@ -1,0 +1,40 @@
+<body>
+    <div>
+        <textarea
+            id="editor"
+            style="width: 100%; height: 80%;"
+            height="100"
+            oninput="updateHasBeenChanged(false)"
+            onchange="updateHasBeenChanged(false)"
+        ></textarea>
+    </div>
+    <div>
+        <p id="has-been-changed" hidden="true">Внесены изменения</p>
+    </div>
+    <div>
+        <button onclick="saveData()">Сохранить</button>
+    </div>
+</body>
+
+<script>
+    const { ipcRenderer } = require("electron");
+
+    async function loadData() {
+        const data = await ipcRenderer.invoke("load-data");
+        document.getElementById("editor").value = data;
+        updateHasBeenChanged(true)
+    }
+
+    function saveData() {
+        const data = document.getElementById("editor").value;
+        ipcRenderer.send("save-data", data);
+        updateHasBeenChanged(true)
+    }
+
+    function updateHasBeenChanged(hidden) {
+        document.getElementById('has-been-changed').hidden = hidden;
+    }
+
+    loadData();
+    setInterval(loadData, 15000);
+</script>
